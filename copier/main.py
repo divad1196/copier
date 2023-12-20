@@ -186,6 +186,7 @@ class Worker:
     conflict: Literal["inline", "rej"] = "inline"
     context_lines: PositiveInt = 3
     unsafe: bool = False
+    no_script: bool = False
     skip_answered: bool = False
 
     answers: AnswersMap = field(default_factory=AnswersMap, init=False)
@@ -218,7 +219,7 @@ class Worker:
         features: Set[str] = set()
         if self.template.jinja_extensions:
             features.add("jinja_extensions")
-        if self.template.tasks:
+        if self.template.tasks and not self.no_script:
             features.add("tasks")
         if mode == "update" and self.subproject.template:
             if self.subproject.template.jinja_extensions:
@@ -264,6 +265,9 @@ class Worker:
         Arguments:
             tasks: The list of tasks to run.
         """
+        if self.no_script:
+            self._print_message("Tasks were ignored")
+            return
         for i, task in enumerate(tasks):
             task_cmd = task.cmd
             if isinstance(task_cmd, str):
@@ -491,7 +495,9 @@ class Worker:
         default_extensions = [
             "jinja2_ansible_filters.AnsibleCoreFiltersExtension",
         ]
-        extensions = default_extensions + list(self.template.jinja_extensions)
+        extensions = default_extensions
+        if not self.no_script:
+            extensions.extend(self.template.jinja_extensions)
         # We want to minimize the risk of hidden malware in the templates
         # so we use the SandboxedEnvironment instead of the regular one.
         # Of course we still have the post-copy tasks to worry about, but at least

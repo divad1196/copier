@@ -158,6 +158,12 @@ class _Subcommand(cli.Application):
             "Allow templates with unsafe features (Jinja extensions, migrations, tasks)"
         ),
     )
+    no_script = cli.Flag(
+        ["--no-script"],
+        help=(
+            "Allow templates by ignoring tasks"
+        ),
+    )
 
     @cli.switch(
         ["-d", "--data"],
@@ -217,6 +223,7 @@ class _Subcommand(cli.Application):
             vcs_ref=self.vcs_ref,
             use_prereleases=self.prereleases,
             unsafe=self.unsafe,
+            no_script=self.no_script,
             **kwargs,
         )
 
